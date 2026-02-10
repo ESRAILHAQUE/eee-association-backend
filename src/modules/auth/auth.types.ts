@@ -7,24 +7,9 @@ export interface LoginBody {
 
 export interface RegisterBody {
   fullName: string;
-  email: string; // institutional email
+  email: string;
   password: string;
-  // optional identity
-  registrationNumber?: string;
-  rollNumber?: string;
-  batch?: string;
-  session?: string;
-  department?: string;
-  program?: string;
-  enrollmentYear?: number;
-  graduationStatus?: "studying" | "graduated" | "dropped";
-  accountType?: "student" | "alumni" | "teacher";
-  // optional contact
-  personalEmail?: string;
-  phoneNumber?: string;
-  address?: string;
-  // optional role (e.g. when admin creates user)
-  currentRole?: "student" | "cr" | "moderator" | "admin" | "super_admin";
+  registrationNumber: string;
 }
 
 export interface AuthResponse {
@@ -32,10 +17,20 @@ export interface AuthResponse {
     id: string;
     fullName: string;
     institutionalEmail: string;
+    registrationNumber: string;
     currentRole: string;
-    accountType: string;
-    emailVerified: boolean;
+    isVerified: boolean;
   };
   accessToken: string;
   expiresIn: string;
+}
+
+export interface RegisterResponse {
+  user: {
+    id: string;
+    fullName: string;
+    institutionalEmail: string;
+    isVerified: boolean;
+  };
+  message: string;
 }

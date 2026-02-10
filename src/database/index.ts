@@ -10,3 +10,8 @@ export const prisma =
   });
 
 if (env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+
+/** Verify database is reachable; throws if connection fails. */
+export async function ensureDatabaseConnection(): Promise<void> {
+  await prisma.$connect();
+}

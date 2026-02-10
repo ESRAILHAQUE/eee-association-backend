@@ -6,7 +6,7 @@ export const authController = {
   async login(
     req: Request<object, object, LoginBody>,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const result = await authService.login(req.body);
@@ -19,7 +19,7 @@ export const authController = {
   async register(
     req: Request<object, object, RegisterBody>,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       const result = await authService.register(req.body);
@@ -29,11 +29,15 @@ export const authController = {
     }
   },
 
-  async getProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getProfile(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const userId = req.user!.userId;
-      const user = await authService.getProfile(userId);
-      res.status(200).json({ success: true, data: { user } });
+      const result = await authService.getProfile(userId);
+      res.status(200).json({ success: true, data: result });
     } catch (e) {
       next(e);
     }
