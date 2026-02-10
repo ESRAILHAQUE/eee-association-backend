@@ -15,3 +15,4 @@ app.use(env.API_PREFIX, routes);
 app.use(errorHandler);
 
 export { app };
+export default app;
