@@ -4,12 +4,19 @@ import { logger } from "./common/utils/logger";
 import { ensureDatabaseConnection } from "./database";
 
 async function start(): Promise<void> {
-  try {
-    await ensureDatabaseConnection();
-    logger.info("Database connected");
-  } catch (err) {
-    logger.error("Database connection failed. Server will not start.", err);
-    process.exit(1);
+  // In local/dev, fail fast if DB is down.
+  // In production (e.g. Vercel), let Prisma lazily manage connections per request.
+  if (env.NODE_ENV !== "production") {
+    try {
+      await ensureDatabaseConnection();
+      logger.info("Database connected");
+    } catch (err) {
+      logger.error(
+        "Database connection failed. Server will not start in development.",
+        err,
+      );
+      process.exit(1);
+    }
   }
 
   app.listen(env.PORT, () => {
