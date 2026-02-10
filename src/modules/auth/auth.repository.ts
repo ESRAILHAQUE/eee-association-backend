@@ -24,12 +24,12 @@ export const authRepository = {
     department?: string;
     program?: string;
     enrollmentYear?: number;
-    graduationStatus?: "studying" | "graduated" | "dropped";
-    accountType?: "student" | "alumni" | "teacher";
+    graduationStatus?: GraduationStatus;
+    accountType?: AccountType;
     personalEmail?: string;
     phoneNumber?: string;
     address?: string;
-    currentRole?: string;
+    currentRole?: CurrentRole;
   }): Promise<User> {
     return prisma.user.create({
       data: {
@@ -48,7 +48,7 @@ export const authRepository = {
         personalEmail: data.personalEmail ?? null,
         phoneNumber: data.phoneNumber ?? null,
         address: data.address ?? null,
-        currentRole: (data.currentRole as "student" | "cr" | "moderator" | "admin" | "super_admin") ?? "student",
+        currentRole: data.currentRole ?? "student",
       },
     });
   },
