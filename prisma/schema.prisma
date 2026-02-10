@@ -1,0 +1,211 @@
+// EEE Association - Prisma Schema (User schema from your spec)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ Enums ============
+enum GraduationStatus {
+  studying
+  graduated
+  dropped
+}
+
+enum AccountType {
+  student
+  alumni
+  teacher
+}
+
+enum PaymentStatus {
+  paid
+  partial
+  unpaid
+}
+
+enum ResultStatus {
+  published
+  withheld
+}
+
+enum AcademicStanding {
+  good
+  probation
+  warning
+}
+
+enum FeeComplianceStatus {
+  clear
+  pending
+}
+
+enum CurrentRole {
+  student
+  cr
+  moderator
+  admin
+  super_admin
+}
+
+// ============ User (main) ============
+model User {
+  id     String @id @default(cuid())
+  // --- identity ---
+  fullName           String
+  registrationNumber String?   @unique
+  rollNumber         String?
+  batch              String?
+  session            String?
+  department         String?
+  program            String?
+  enrollmentYear     Int?
+  graduationStatus   GraduationStatus? @default(studying)
+  accountType        AccountType       @default(student)
+  // --- contact ---
+  institutionalEmail String   @unique
+  personalEmail      String?
+  phoneNumber        String?
+  address            String?
+  // --- authentication ---
+  passwordHash       String
+  emailVerified      Boolean  @default(false)
+  lastLoginAt        DateTime?
+  failedLoginAttempts Int     @default(0)
+  accountLocked      Boolean  @default(false)
+  // --- cumulative performance (summary) ---
+  totalCreditsCompleted Int?   @default(0)
+  cgpa                Float?
+  academicStanding    AcademicStanding?
+  // --- fee summary ---
+  totalPayable       Decimal? @db.Decimal(12, 2)
+  totalPaid          Decimal? @db.Decimal(12, 2)
+  totalDue           Decimal? @db.Decimal(12, 2)
+  feeComplianceStatus FeeComplianceStatus?
+  // --- roles ---
+  currentRole    CurrentRole @default(student)
+  approvalStatus String?
+  accessLevel    String?
+  // --- system metadata ---
+  accountCreatedAt    DateTime  @default(now())
+  lastUpdatedAt       DateTime  @updatedAt
+  lastReviewedByAdmin DateTime?
+  dataConsent         Boolean   @default(false)
+  archiveStatus       String?
+  // --- lifecycle ---
+  isActive  Boolean @default(true)
+  isAlumni  Boolean @default(false)
+  isDeleted Boolean @default(false)
+
+  // Relations
+  loginHistory           LoginHistory[]
+  passwordResetHistory   PasswordResetHistory[]
+  associationFees        AssociationFee[]
+  academicSemesters      AcademicSemester[]
+  roleHistory            RoleHistory[]
+
+  // JSON for complex nested (query by key if needed later)
+  roleHistoryJson         Json?  // backup/detailed role history
+  transcriptMetadata     Json?  // { transcriptAvailable, lastGeneratedAt }
+  backlogHistory         Json?
+  associationEngagement  Json?  // events, clubs, forum, projects summary
+  communicationFeedback Json?  // notifications, notices read, feedback, complaints
+  analyticsTracking      Json?  // attendanceRate, activityTimeline, leaderboardRank, performanceBadges
+  complianceDiscipline   Json?  // warnings, violations, disciplinaryNotes, restrictionStatus
+
+  @@map("users")
+}
+
+// ============ Authentication & Security ============
+model LoginHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loggedAt  DateTime @default(now())
+  ip        String?
+  userAgent String?
+
+  @@index([userId])
+  @@map("login_history")
+}
+
+model PasswordResetHistory {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resetAt  DateTime @default(now())
+  tokenUsed String?
+
+  @@index([userId])
+  @@map("password_reset_history")
+}
+
+// ============ Association Finance (semester-wise) ============
+model AssociationFee {
+  id                  String        @id @default(cuid())
+  userId              String
+  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  semesterNumber      Int           // 1–8
+  feeAmount           Decimal       @db.Decimal(12, 2)
+  paidAmount          Decimal       @db.Decimal(12, 2) @default(0)
+  dueAmount           Decimal       @db.Decimal(12, 2)
+  paymentStatus       PaymentStatus @default(unpaid)
+  paymentMethod       String?
+  transactionReference String?
+  paymentDate         DateTime?
+
+  @@unique([userId, semesterNumber])
+  @@index([userId])
+  @@map("association_fees")
+}
+
+// ============ Academic Profile (4 years → 8 semesters) ============
+model AcademicSemester {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  year           Int          // 1–4
+  semesterNumber Int          // 1–2 (within year) or 1–8 overall
+  semesterGPA    Float?
+  resultStatus   ResultStatus?
+
+  subjects       AcademicSubject[]
+
+  @@unique([userId, year, semesterNumber])
+  @@index([userId])
+  @@map("academic_semesters")
+}
+
+model AcademicSubject {
+  id           String           @id @default(cuid())
+  semesterId   String
+  semester     AcademicSemester @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  subjectCode  String
+  subjectTitle String
+  credit       Float
+  theoryMarks  Float?
+  practicalMarks Float?
+  totalMarks   Float?
+  grade        String?
+  gradePoint   Float?
+
+  @@index([semesterId])
+  @@map("academic_subjects")
+}
+
+// ============ Roles history ============
+model RoleHistory {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String
+  assignedAt DateTime @default(now())
+  assignedBy String?
+
+  @@index([userId])
+  @@map("role_history")
+}
