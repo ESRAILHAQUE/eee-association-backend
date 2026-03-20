@@ -78,6 +78,27 @@ model User {
   associationFees   AssociationFee[]
   academicSemesters AcademicSemester[]
   roleHistory       RoleHistory[]
+  noticesCreated       Notice[]         @relation("NoticesCreated")
+  eventsCreated        Event[]          @relation("EventsCreated")
+  eventsApproved       Event[]          @relation("EventsApproved")
+  eventRsvps           EventRsvp[]      @relation("EventRsvps")
+  attendanceQRs        AttendanceQR[]   @relation("AttendanceQRsCreated")
+  attendances          Attendance[]     @relation("AttendanceRecords")
+  certificatesReceived Certificate[]    @relation("CertificatesReceived")
+  certificatesIssued   Certificate[]    @relation("CertificatesIssued")
+  notifications        Notification[]   @relation("NotificationsReceived")
+  forumPosts           ForumPost[]      @relation("ForumPosts")
+  forumComments        ForumComment[]   @relation("ForumComments")
+  forumVotes           ForumVote[]      @relation("ForumVotes")
+  feedbacks            Feedback[]       @relation("FeedbackSubmitted")
+  leaveRequests        LeaveRequest[]   @relation("LeaveRequests")
+  leaveReviews         LeaveRequest[]   @relation("LeaveReviews")
+  resources            Resource[]       @relation("ResourcesUploaded")
+  clubMemberships      ClubMember[]     @relation("ClubMemberships")
+  projects             Project[]        @relation("Projects")
+  mentorProfile        MentorProfile?   @relation("MentorProfile")
+  menteeSessions       MentorSession[]  @relation("MenteeSessions")
+  documentsUploaded    Document[]       @relation("DocumentsUploaded")
 
   @@map("users")
 }
@@ -202,6 +223,403 @@ model AcademicSubject {
 
   @@index([semesterId])
   @@map("academic_subjects")
+}
+
+// ============ Notices ============
+enum NoticeTarget {
+  all
+  batch_specific
+}
+
+model Notice {
+  id          String       @id @default(cuid())
+  title       String
+  content     String
+  targetType  NoticeTarget @default(all)
+  batch       String?      // set when targetType = batch_specific
+  isPinned    Boolean      @default(false)
+  isUrgent    Boolean      @default(false)
+  createdById String
+  createdBy   User         @relation("NoticesCreated", fields: [createdById], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([batch])
+  @@index([createdById])
+  @@map("notices")
+}
+
+// ============ Events ============
+enum EventStatus {
+  draft       // proposed by CR/moderator, pending approval
+  published   // admin approved / admin created
+  cancelled
+  completed
+}
+
+enum EventType {
+  workshop
+  seminar
+  competition
+  cultural
+  meeting
+  other
+}
+
+model Event {
+  id           String      @id @default(cuid())
+  title        String
+  description  String
+  eventType    EventType   @default(other)
+  status       EventStatus @default(draft)
+  venue        String
+  startAt      DateTime
+  endAt        DateTime
+  targetBatch  String?     // null = open to all students
+  maxCapacity  Int?
+  createdById  String
+  createdBy    User        @relation("EventsCreated", fields: [createdById], references: [id])
+  approvedById String?
+  approvedBy   User?       @relation("EventsApproved", fields: [approvedById], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  rsvps        EventRsvp[]
+  attendanceQR AttendanceQR?
+  attendances  Attendance[]
+  certificates Certificate[]
+
+  @@index([status])
+  @@index([startAt])
+  @@index([targetBatch])
+  @@index([createdById])
+  @@map("events")
+}
+
+model EventRsvp {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation("EventRsvps", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+  @@map("event_rsvps")
+}
+
+// ============ Attendance ============
+model AttendanceQR {
+  id          String   @id @default(cuid())
+  eventId     String   @unique
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  token       String   @unique @default(cuid())
+  expiresAt   DateTime
+  createdById String
+  createdBy   User     @relation("AttendanceQRsCreated", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@map("attendance_qrs")
+}
+
+model Attendance {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation("AttendanceRecords", fields: [userId], references: [id], onDelete: Cascade)
+  scannedAt DateTime @default(now())
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+  @@map("attendances")
+}
+
+// ============ Certificates ============
+model Certificate {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation("CertificatesReceived", fields: [userId], references: [id], onDelete: Cascade)
+  eventId    String
+  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  issuedById String
+  issuedBy   User     @relation("CertificatesIssued", fields: [issuedById], references: [id])
+  issuedAt   DateTime @default(now())
+
+  @@unique([userId, eventId])
+  @@index([userId])
+  @@index([eventId])
+  @@map("certificates")
+}
+
+// ============ Notifications ============
+enum NotificationStatus {
+  unread
+  read
+}
+
+model Notification {
+  id        String             @id @default(cuid())
+  userId    String
+  user      User               @relation("NotificationsReceived", fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  status    NotificationStatus @default(unread)
+  createdAt DateTime           @default(now())
+
+  @@index([userId, status])
+  @@map("notifications")
+}
+
+// ============ Forum ============
+enum ForumPostStatus {
+  active
+  flagged
+  removed
+}
+
+model ForumCategory {
+  id    String      @id @default(cuid())
+  name  String      @unique
+  posts ForumPost[]
+
+  @@map("forum_categories")
+}
+
+model ForumPost {
+  id         String          @id @default(cuid())
+  title      String
+  content    String
+  categoryId String
+  category   ForumCategory   @relation(fields: [categoryId], references: [id])
+  authorId   String
+  author     User            @relation("ForumPosts", fields: [authorId], references: [id])
+  status     ForumPostStatus @default(active)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  comments   ForumComment[]
+  votes      ForumVote[]
+
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([status])
+  @@map("forum_posts")
+}
+
+model ForumComment {
+  id        String    @id @default(cuid())
+  postId    String
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User      @relation("ForumComments", fields: [authorId], references: [id])
+  content   String
+  createdAt DateTime  @default(now())
+
+  @@index([postId])
+  @@map("forum_comments")
+}
+
+model ForumVote {
+  id     String    @id @default(cuid())
+  postId String
+  post   ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId String
+  user   User      @relation("ForumVotes", fields: [userId], references: [id])
+  vote   Int       // 1 = upvote, -1 = downvote
+
+  @@unique([postId, userId])
+  @@map("forum_votes")
+}
+
+// ============ Feedback & Complaints ============
+enum FeedbackStatus {
+  open
+  in_progress
+  resolved
+  dismissed
+}
+
+model Feedback {
+  id            String         @id @default(cuid())
+  submittedById String
+  submittedBy   User           @relation("FeedbackSubmitted", fields: [submittedById], references: [id])
+  isAnonymous   Boolean        @default(false)
+  title         String
+  content       String
+  batch         String?
+  status        FeedbackStatus @default(open)
+  resolution    String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([status])
+  @@index([batch])
+  @@map("feedbacks")
+}
+
+// ============ Leave Requests ============
+enum LeaveStatus {
+  pending
+  approved
+  rejected
+}
+
+model LeaveRequest {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation("LeaveRequests", fields: [userId], references: [id])
+  title        String
+  reason       String
+  leaveDate    DateTime
+  returnDate   DateTime
+  status       LeaveStatus @default(pending)
+  reviewedById String?
+  reviewedBy   User?       @relation("LeaveReviews", fields: [reviewedById], references: [id])
+  reviewNote   String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("leave_requests")
+}
+
+// ============ Academic Resources ============
+enum ResourceStatus {
+  pending
+  approved
+  rejected
+}
+
+model Resource {
+  id           String         @id @default(cuid())
+  title        String
+  description  String?
+  subject      String
+  semester     Int?
+  fileUrl      String
+  fileType     String
+  uploadedById String
+  uploadedBy   User           @relation("ResourcesUploaded", fields: [uploadedById], references: [id])
+  status       ResourceStatus @default(pending)
+  downloads    Int            @default(0)
+  batch        String?
+  createdAt    DateTime       @default(now())
+
+  @@index([subject])
+  @@index([status])
+  @@index([uploadedById])
+  @@map("resources")
+}
+
+// ============ Clubs ============
+model Club {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  description String
+  logoUrl     String?
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+
+  members     ClubMember[]
+
+  @@map("clubs")
+}
+
+model ClubMember {
+  id       String   @id @default(cuid())
+  clubId   String
+  club     Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User     @relation("ClubMemberships", fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt DateTime @default(now())
+
+  @@unique([clubId, userId])
+  @@index([clubId])
+  @@index([userId])
+  @@map("club_members")
+}
+
+// ============ Projects ============
+enum ProjectCategory {
+  iot
+  matlab
+  power
+  embedded
+  software
+  research
+  other
+}
+
+model Project {
+  id        String          @id @default(cuid())
+  title     String
+  abstract  String
+  category  ProjectCategory @default(other)
+  batch     String?
+  githubUrl String?
+  docUrl    String?
+  userId    String
+  user      User            @relation("Projects", fields: [userId], references: [id])
+  likes     Int             @default(0)
+  createdAt DateTime        @default(now())
+
+  @@index([userId])
+  @@index([batch])
+  @@map("projects")
+}
+
+// ============ Mentorship ============
+model MentorProfile {
+  id        String          @id @default(cuid())
+  userId    String          @unique
+  user      User            @relation("MentorProfile", fields: [userId], references: [id])
+  expertise String[]
+  bio       String
+  isActive  Boolean         @default(true)
+
+  sessions  MentorSession[]
+
+  @@map("mentor_profiles")
+}
+
+model MentorSession {
+  id          String        @id @default(cuid())
+  mentorId    String
+  mentor      MentorProfile @relation(fields: [mentorId], references: [id])
+  menteeId    String
+  mentee      User          @relation("MenteeSessions", fields: [menteeId], references: [id])
+  topic       String
+  scheduledAt DateTime
+  status      String        @default("pending")
+  feedback    String?
+  createdAt   DateTime      @default(now())
+
+  @@index([mentorId])
+  @@index([menteeId])
+  @@map("mentor_sessions")
+}
+
+// ============ Documents ============
+model Document {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  fileUrl      String
+  fileType     String
+  category     String
+  accessLevel  String   @default("all")
+  uploadedById String
+  uploadedBy   User     @relation("DocumentsUploaded", fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
+
+  @@index([category])
+  @@index([uploadedById])
+  @@map("documents")
 }
 
 // ============ Roles history ============
