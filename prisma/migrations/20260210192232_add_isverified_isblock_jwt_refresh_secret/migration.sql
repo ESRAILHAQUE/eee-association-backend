@@ -4,9 +4,6 @@ CREATE TYPE "GraduationStatus" AS ENUM ('studying', 'graduated', 'dropped');
 -- CreateEnum
 CREATE TYPE "AccountType" AS ENUM ('student', 'alumni', 'teacher');
 
-
-
-
 -- CreateEnum
 CREATE TYPE "PaymentStatus" AS ENUM ('paid', 'partial', 'unpaid');
 
