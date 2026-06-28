@@ -634,3 +634,4 @@ model RoleHistory {
   @@index([userId])
   @@map("role_history")
 }
+

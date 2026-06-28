@@ -13,6 +13,7 @@ export const env = {
   PORT: parseInt(getEnv("PORT", "4000"), 10),
   API_PREFIX: getEnv("API_PREFIX", "/api"),
   DATABASE_URL: getEnv("DATABASE_URL"),
+  DATABASE_POOL_URL: getEnv("DATABASE_POOL_URL", getEnv("DATABASE_URL")),
   JWT_SECRET: getEnv("JWT_SECRET"),
   JWT_REFRESH_SECRET: getEnv("JWT_REFRESH_SECRET"),
   JWT_EXPIRES_IN: getEnv("JWT_EXPIRES_IN", "7d"),
