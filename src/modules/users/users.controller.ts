@@ -2,6 +2,40 @@ import { Request, Response, NextFunction } from "express";
 import { usersService } from "./users.service";
 
 export const usersController = {
+  async getList(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const { role, batch, search } = req.query;
+      const filters: any = {
+        role: role as string,
+        batch: batch as string,
+        search: search as string,
+      };
+
+      const user = (req as any).user;
+      if (user?.currentRole === "cr") {
+        const { prisma } = require("../../database");
+        const controlledBatch = await prisma.batch.findUnique({
+          where: { crId: user.id },
+        });
+        if (controlledBatch) {
+          filters.batch = controlledBatch.name;
+        } else {
+          // If the CR doesn't control any batch, they shouldn't see anyone
+          filters.batch = "___NONE___"; 
+        }
+      }
+
+      const users = await usersService.listUsers(filters);
+      res.status(200).json({ success: true, data: users });
+    } catch (e) {
+      next(e);
+    }
+  },
+
   async getByRegNo(
     req: Request,
     res: Response,
@@ -47,6 +81,53 @@ export const usersController = {
         registrationNumber,
         isVerified,
       );
+      res.status(200).json({ success: true, data: user });
+    } catch (e) {
+      next(e);
+    }
+  },
+
+  async setVerifiedById(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = req.params.id as string;
+      const user = await usersService.setVerifiedById(
+        userId,
+        true, // verify sets to true
+      );
+      res.status(200).json({ success: true, data: user });
+    } catch (e) {
+      next(e);
+    }
+  },
+
+  async toggleBlock(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = req.params.id as string;
+      const isBlock = Boolean(req.body?.isBlock);
+      const user = await usersService.setBlock(userId, isBlock);
+      res.status(200).json({ success: true, data: user });
+    } catch (e) {
+      next(e);
+    }
+  },
+
+  async updateRole(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = req.params.id as string;
+      const role = req.body?.role as string;
+      const user = await usersService.updateRole(userId, role);
       res.status(200).json({ success: true, data: user });
     } catch (e) {
       next(e);

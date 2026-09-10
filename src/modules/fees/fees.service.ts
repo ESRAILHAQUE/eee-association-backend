@@ -40,12 +40,12 @@ export const feesService = {
 
   /** CR: scoped to their batch */
   async getBatchFees(actor: { userId: string }, filters?: { status?: string }) {
-    const profile = await prisma.userProfile.findUnique({
-      where: { userId: actor.userId },
-      select: { batch: true },
+    const controlledBatch = await prisma.batch.findUnique({
+      where: { crId: actor.userId },
+      select: { name: true },
     });
-    if (!profile?.batch) throw new Error("CR has no batch assigned");
-    return feesRepository.findByBatch(profile.batch, filters);
+    if (!controlledBatch?.name) throw new Error("CR has no batch assigned");
+    return feesRepository.findByBatch(controlledBatch.name, filters);
   },
 
   /** Admin: aggregate stats */
@@ -55,10 +55,10 @@ export const feesService = {
 
   /** CR: stats for own batch */
   async getBatchStats(actor: { userId: string }) {
-    const profile = await prisma.userProfile.findUnique({
-      where: { userId: actor.userId },
-      select: { batch: true },
+    const controlledBatch = await prisma.batch.findUnique({
+      where: { crId: actor.userId },
+      select: { name: true },
     });
-    return feesRepository.getStats(profile?.batch ?? undefined);
+    return feesRepository.getStats(controlledBatch?.name ?? undefined);
   },
 };

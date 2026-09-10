@@ -33,4 +33,19 @@ router.post("/login", validate(loginValidation), authController.login);
 router.post("/register", validate(registerValidation), authController.register);
 router.get("/me", authMiddleware, authController.getProfile);
 
+router.post(
+  "/forgot-password",
+  validate([body("email").isEmail().normalizeEmail().withMessage("Valid email required")]),
+  authController.forgotPassword,
+);
+
+router.post(
+  "/reset-password",
+  validate([
+    body("token").trim().notEmpty().withMessage("Token is required"),
+    body("newPassword").isLength({ min: 6 }).withMessage("New password must be at least 6 characters"),
+  ]),
+  authController.resetPassword,
+);
+
 export const authRoutes = router;

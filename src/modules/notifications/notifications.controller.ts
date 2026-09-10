@@ -20,6 +20,15 @@ export const notificationsController = {
     }
   },
 
+  async getSent(req: Request, res: Response, next: NextFunction) {
+    try {
+      const notifications = await notificationsService.getSent(req.user!);
+      res.json({ success: true, data: notifications });
+    } catch (err) {
+      next(err);
+    }
+  },
+
   async markAllRead(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await notificationsService.markAllRead(req.user!);

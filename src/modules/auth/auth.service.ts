@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { env } from "../../config";
 import { authRepository } from "./auth.repository";
 import { AppError } from "../../common/middleware";
@@ -8,6 +9,8 @@ import type {
   RegisterBody,
   AuthResponse,
   RegisterResponse,
+  ForgotPasswordBody,
+  ResetPasswordBody,
 } from "./auth.types";
 import type { JwtPayload } from "../../common/middleware";
 
@@ -117,5 +120,70 @@ export const authService = {
       profile: user.profile ?? null,
       pending: false,
     };
+  },
+
+  /**
+   * Initiate password reset: generate token, store it, send email.
+   * In development, the reset token is returned in the response.
+   * In production, an email is sent (requires SMTP env vars).
+   */
+  async forgotPassword(body: ForgotPasswordBody): Promise<{ message: string; devToken?: string }> {
+    const email = body.email.toLowerCase().trim();
+    const user = await authRepository.findByInstitutionalEmail(email);
+    // Don't reveal whether email exists
+    if (!user || user.isDeleted) {
+      return { message: "If this email is registered, a reset link has been sent." };
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await authRepository.createPasswordResetToken(user.id, token, expiresAt);
+
+    if (env.NODE_ENV !== "production") {
+      // Development: return token directly so it can be tested without SMTP
+      return {
+        message: "[DEV MODE] Password reset token generated. Use it at POST /api/auth/reset-password.",
+        devToken: token,
+      };
+    }
+
+    // Production: send email via nodemailer (requires SMTP_HOST, SMTP_USER, SMTP_PASS env vars)
+    try {
+      const nodemailer = await import("nodemailer");
+      const transporter = nodemailer.default.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT ?? "587", 10),
+        secure: process.env.SMTP_SECURE === "true",
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      });
+      const resetUrl = `${process.env.FRONTEND_URL ?? "http://localhost:3000"}/reset-password?token=${token}`;
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
+        to: user.institutionalEmail,
+        subject: "EEE Association — Password Reset",
+        html: `<p>Hello ${user.fullName},</p><p>Click the link below to reset your password. This link expires in 1 hour.</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>If you did not request this, ignore this email.</p>`,
+      });
+    } catch {
+      // Log but don't expose email failure to the user
+    }
+
+    return { message: "If this email is registered, a reset link has been sent." };
+  },
+
+  /** Complete the password reset using a valid token */
+  async resetPassword(body: ResetPasswordBody): Promise<{ message: string }> {
+    const { token, newPassword } = body;
+    if (!token || !newPassword || newPassword.length < 6) {
+      throw new AppError(400, "Token and new password (min 6 chars) are required");
+    }
+
+    const userId = await authRepository.findValidResetToken(token);
+    if (!userId) throw new AppError(400, "Invalid or expired reset token");
+
+    const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await authRepository.updatePasswordHash(userId, passwordHash);
+    await authRepository.consumeResetToken(token);
+
+    return { message: "Password has been reset successfully. You can now log in with your new password." };
   },
 };

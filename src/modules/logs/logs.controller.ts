@@ -1,22 +1,12 @@
 import type { Request, Response, NextFunction } from "express";
-import { prisma } from "../../database";
+import { logsService } from "./logs.service";
+import type { GetLoginLogsQuery } from "./logs.types";
 
 export const logsController = {
   async getLoginLogs(req: Request, res: Response, next: NextFunction) {
     try {
-      const { userId, limit = "50" } = req.query as Record<string, string>;
-      const logs = await prisma.loginHistory.findMany({
-        where: userId ? { userId } : {},
-        orderBy: { loggedAt: "desc" },
-        take: Math.min(parseInt(limit, 10), 200),
-        select: {
-          id: true,
-          loggedAt: true,
-          ip: true,
-          userAgent: true,
-          user: { select: { id: true, fullName: true, registrationNumber: true, currentRole: true } },
-        },
-      });
+      const { userId, limit = "50" } = req.query as GetLoginLogsQuery;
+      const logs = await logsService.getLoginLogs(userId, parseInt(limit, 10));
       res.json({ success: true, data: logs });
     } catch (err) {
       next(err);
@@ -25,19 +15,12 @@ export const logsController = {
 
   async getPasswordResetLogs(req: Request, res: Response, next: NextFunction) {
     try {
-      const { limit = "50" } = req.query as Record<string, string>;
-      const logs = await prisma.passwordResetHistory.findMany({
-        orderBy: { resetAt: "desc" },
-        take: Math.min(parseInt(limit, 10), 200),
-        select: {
-          id: true,
-          resetAt: true,
-          user: { select: { id: true, fullName: true, registrationNumber: true } },
-        },
-      });
+      const { limit = "50" } = req.query as { limit?: string };
+      const logs = await logsService.getPasswordResetLogs(parseInt(limit, 10));
       res.json({ success: true, data: logs });
     } catch (err) {
       next(err);
     }
   },
 };
+

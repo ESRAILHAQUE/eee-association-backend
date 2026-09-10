@@ -10,8 +10,24 @@ const notificationSelect = {
 
 export const notificationsRepository = {
   /** Bulk-insert notifications for a list of userIds */
-  async createMany(data: { userId: string; title: string; message: string }[]) {
+  async createMany(data: { userId: string; title: string; message: string; senderId?: string }[]) {
     return prisma.notification.createMany({ data });
+  },
+
+  /** Get notifications sent by a specific user */
+  async findSentByUserId(senderId: string) {
+    // To avoid fetching N copies of the same broadcast, we select distinct
+    return prisma.notification.findMany({
+      where: { senderId },
+      distinct: ['title', 'message', 'createdAt'],
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        message: true,
+        createdAt: true,
+      },
+    });
   },
 
   /** Fetch all users in a specific batch */

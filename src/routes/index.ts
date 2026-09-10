@@ -19,11 +19,13 @@ import { feesRoutes } from "../modules/fees";
 import { analyticsRoutes } from "../modules/analytics";
 import { logsRoutes } from "../modules/logs";
 import { newsletterRoutes } from "../modules/newsletter";
+import { batchesRoutes } from "../modules/batches";
 
 const router = Router();
 
 router.use("/auth", authRoutes);
 router.use("/users", usersRoutes);
+router.use("/batches", batchesRoutes);
 router.use("/notices", noticesRoutes);
 router.use("/events", eventsRoutes);
 router.use("/notifications", notificationsRoutes);

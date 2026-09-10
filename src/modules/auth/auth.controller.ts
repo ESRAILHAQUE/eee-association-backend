@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { authService } from "./auth.service";
-import type { LoginBody, RegisterBody } from "./auth.types";
+import type { LoginBody, RegisterBody, ForgotPasswordBody, ResetPasswordBody } from "./auth.types";
+
 
 export const authController = {
   async login(
@@ -38,6 +39,32 @@ export const authController = {
       const userId = req.user!.userId;
       const result = await authService.getProfile(userId);
       res.status(200).json({ success: true, data: result });
+    } catch (e) {
+      next(e);
+    }
+  },
+
+  async forgotPassword(
+    req: Request<object, object, ForgotPasswordBody>,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const result = await authService.forgotPassword(req.body);
+      res.status(200).json({ success: true, ...result });
+    } catch (e) {
+      next(e);
+    }
+  },
+
+  async resetPassword(
+    req: Request<object, object, ResetPasswordBody>,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const result = await authService.resetPassword(req.body);
+      res.status(200).json({ success: true, ...result });
     } catch (e) {
       next(e);
     }

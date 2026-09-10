@@ -87,6 +87,7 @@ model User {
   certificatesReceived Certificate[]    @relation("CertificatesReceived")
   certificatesIssued   Certificate[]    @relation("CertificatesIssued")
   notifications        Notification[]   @relation("NotificationsReceived")
+  notificationsSent    Notification[]   @relation("NotificationsSent")
   forumPosts           ForumPost[]      @relation("ForumPosts")
   forumComments        ForumComment[]   @relation("ForumComments")
   forumVotes           ForumVote[]      @relation("ForumVotes")
@@ -99,8 +100,21 @@ model User {
   mentorProfile        MentorProfile?   @relation("MentorProfile")
   menteeSessions       MentorSession[]  @relation("MenteeSessions")
   documentsUploaded    Document[]       @relation("DocumentsUploaded")
+  controlledBatch    Batch?           @relation("BatchCR")
 
   @@map("users")
+}
+
+// ============ Batch Management ============
+model Batch {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  crId      String?  @unique
+  cr        User?    @relation("BatchCR", fields: [crId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("batches")
 }
 
 // ============ User profile (details – access only when isVerified) ============
@@ -365,12 +379,15 @@ model Notification {
   id        String             @id @default(cuid())
   userId    String
   user      User               @relation("NotificationsReceived", fields: [userId], references: [id], onDelete: Cascade)
+  senderId  String?
+  sender    User?              @relation("NotificationsSent", fields: [senderId], references: [id], onDelete: SetNull)
   title     String
   message   String
   status    NotificationStatus @default(unread)
   createdAt DateTime           @default(now())
 
   @@index([userId, status])
+  @@index([senderId])
   @@map("notifications")
 }
 

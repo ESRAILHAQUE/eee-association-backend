@@ -34,3 +34,12 @@ export interface RegisterResponse {
   };
   message: string;
 }
+
+export interface ForgotPasswordBody {
+  email: string;
+}
+
+export interface ResetPasswordBody {
+  token: string;
+  newPassword: string;
+}

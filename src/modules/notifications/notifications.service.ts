@@ -48,12 +48,18 @@ export const notificationsService = {
 
     const records = targetUserIds.map((userId) => ({
       userId,
+      senderId: actor.userId,
       title: body.title,
       message: body.message,
     }));
 
     await notificationsRepository.createMany(records);
     return { sent: records.length };
+  },
+
+  /** Get notifications sent by the authenticated user */
+  async getSent(actor: JwtPayload) {
+    return notificationsRepository.findSentByUserId(actor.userId);
   },
 
   /** Get all notifications for the authenticated user */

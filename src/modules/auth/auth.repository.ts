@@ -74,4 +74,49 @@ export const authRepository = {
       },
     });
   },
+
+  /**
+   * Store a password reset token in PasswordResetHistory.
+   * We encode the token and expiry together ("<token>:<expiresAt_iso>") in tokenUsed.
+   */
+  async createPasswordResetToken(
+    userId: string,
+    token: string,
+    expiresAt: Date,
+  ): Promise<void> {
+    await prisma.passwordResetHistory.create({
+      data: {
+        userId,
+        tokenUsed: `${token}:${expiresAt.toISOString()}`,
+      },
+    });
+  },
+
+  /**
+   * Look up a valid (unexpired, unused) password reset token.
+   * Returns userId if valid, null otherwise.
+   */
+  async findValidResetToken(token: string): Promise<string | null> {
+    const records = await prisma.passwordResetHistory.findMany({
+      where: { tokenUsed: { startsWith: `${token}:` } },
+      orderBy: { resetAt: "desc" },
+      take: 1,
+    });
+    if (!records.length) return null;
+    const record = records[0];
+    const parts = record.tokenUsed?.split(":");
+    if (!parts || parts.length < 2) return null;
+    // rebuild ISO string (may contain colons): everything after first ":" segment
+    const expiresAt = new Date(record.tokenUsed!.slice(token.length + 1));
+    if (expiresAt < new Date()) return null; // expired
+    return record.userId;
+  },
+
+  /** Consume (invalidate) a reset token by clearing tokenUsed */
+  async consumeResetToken(token: string): Promise<void> {
+    await prisma.passwordResetHistory.updateMany({
+      where: { tokenUsed: { startsWith: `${token}:` } },
+      data: { tokenUsed: null },
+    });
+  },
 };

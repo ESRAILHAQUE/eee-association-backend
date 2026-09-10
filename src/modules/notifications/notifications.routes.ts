@@ -26,6 +26,9 @@ router.post(
 // GET /notifications/my — any authenticated user gets their own notifications
 router.get("/my", authMiddleware, notificationsController.getMy);
 
+// GET /notifications/sent — get notifications sent by the user
+router.get("/sent", authMiddleware, notificationsController.getSent);
+
 // PATCH /notifications/read-all — mark all as read
 router.patch("/read-all", authMiddleware, notificationsController.markAllRead);
 

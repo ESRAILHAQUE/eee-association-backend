@@ -8,6 +8,26 @@ export const usersRepository = {
     });
   },
 
+  async findMany(filters: { role?: string; batch?: string; search?: string }) {
+    const where: any = {};
+    if (filters.role) where.currentRole = filters.role;
+    if (filters.search) {
+      where.OR = [
+        { fullName: { contains: filters.search, mode: "insensitive" } },
+        { registrationNumber: { contains: filters.search, mode: "insensitive" } },
+      ];
+    }
+    if (filters.batch) {
+      where.profile = { batch: filters.batch };
+    }
+    
+    return prisma.user.findMany({
+      where,
+      include: { profile: true },
+      orderBy: { fullName: 'asc' },
+    });
+  },
+
   async upsertProfile(
     userId: string,
     registrationNumber: string,
@@ -30,4 +50,18 @@ export const usersRepository = {
       data: { isVerified },
     });
   },
+
+  async setBlock(userId: string, isBlock: boolean) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { isBlock },
+    });
+  },
+
+  async updateRole(userId: string, role: any) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { currentRole: role },
+    });
+  }
 };
