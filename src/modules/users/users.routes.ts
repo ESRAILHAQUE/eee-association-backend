@@ -16,6 +16,12 @@ router.get(
 );
 
 router.patch(
+  "/:id",
+  requireRoles("admin", "super_admin"),
+  usersController.updateUser
+);
+
+router.patch(
   "/:id/verify",
   requireRoles("admin", "super_admin"),
   usersController.setVerifiedById

@@ -63,5 +63,21 @@ export const usersRepository = {
       where: { id: userId },
       data: { currentRole: role },
     });
+  },
+
+  async updateUser(userId: string, userUpdate: any, profileUpdate: any) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...userUpdate,
+        profile: {
+          upsert: {
+            create: { ...profileUpdate, registrationNumber: userUpdate.registrationNumber || undefined },
+            update: profileUpdate
+          }
+        }
+      },
+      include: { profile: true }
+    });
   }
 };

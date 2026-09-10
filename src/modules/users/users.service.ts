@@ -42,6 +42,10 @@ export const usersService = {
     return usersRepository.setBlock(userId, isBlock);
   },
 
+  async updateUserById(userId: string, userUpdate: any, profileUpdate: any) {
+    return usersRepository.updateUser(userId, userUpdate, profileUpdate);
+  },
+
   async updateRole(userId: string, role: string) {
     return usersRepository.updateRole(userId, role as any);
   }

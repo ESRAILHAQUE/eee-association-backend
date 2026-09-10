@@ -2,6 +2,21 @@ import { Request, Response, NextFunction } from "express";
 import { usersService } from "./users.service";
 
 export const usersController = {
+  async updateUser(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const userId = req.params.id;
+      const { user: userUpdate, profile: profileUpdate } = req.body;
+      const result = await usersService.updateUserById(userId, userUpdate || {}, profileUpdate || {});
+      res.status(200).json({ success: true, data: result });
+    } catch (e) {
+      next(e);
+    }
+  },
+
   async getList(
     req: Request,
     res: Response,
