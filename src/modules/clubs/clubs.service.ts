@@ -47,6 +47,13 @@ export const clubsService = {
   },
 
   /** Member gets their own clubs */
+  async getMembers(actor: JwtPayload, clubId: string) {
+    if (actor.role !== "admin" && actor.role !== "super_admin") throw new AppError(403, "Only admin can view members");
+    const members = await clubsRepository.findMembers(clubId);
+    return members.map(m => m.user);
+  },
+
+  /** Member gets their own clubs */
   async getMy(actor: JwtPayload) {
     const memberships = await clubsRepository.findByUser(actor.userId);
     return memberships.map((m) => m.club);

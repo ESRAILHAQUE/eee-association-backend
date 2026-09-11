@@ -10,7 +10,13 @@ export const usersRepository = {
 
   async findMany(filters: { role?: string; batch?: string; search?: string }) {
     const where: any = {};
-    if (filters.role) where.currentRole = filters.role;
+    if (filters.role) {
+      if (filters.role.includes(',')) {
+        where.currentRole = { in: filters.role.split(',') };
+      } else {
+        where.currentRole = filters.role;
+      }
+    }
     if (filters.search) {
       where.OR = [
         { fullName: { contains: filters.search, mode: "insensitive" } },
@@ -87,5 +93,24 @@ export const usersRepository = {
       },
       include: { profile: true }
     });
+  },
+  
+  async bulkCreate(users: any[]) {
+    // Loop through users and create them inside a transaction
+    return prisma.$transaction(
+      users.map(user => {
+        const { profile, ...userData } = user;
+        return prisma.user.upsert({
+          where: { registrationNumber: userData.registrationNumber },
+          create: {
+            ...userData,
+            profile: {
+              create: profile
+            }
+          },
+          update: {} // don't overwrite if it exists
+        });
+      })
+    );
   }
 };

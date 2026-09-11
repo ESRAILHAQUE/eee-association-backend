@@ -9,18 +9,31 @@ export const batchesService = {
   async createBatch(name: string) {
     return batchesRepository.create(name);
   },
-  async assignCR(batchId: string, crId: string | null) {
+  async addCR(batchId: string, crId: string) {
     const batch = await batchesRepository.findById(batchId);
     if (!batch) throw new AppError(404, "Batch not found");
 
-    if (batch.crId && batch.crId !== crId) {
-      await usersRepository.updateRole(batch.crId, "student");
-    }
+    await usersRepository.updateRole(crId, "cr");
+    return batchesRepository.addCR(batchId, crId);
+  },
+  async removeCR(batchId: string, crId: string) {
+    const batch = await batchesRepository.findById(batchId);
+    if (!batch) throw new AppError(404, "Batch not found");
 
-    if (crId) {
-      await usersRepository.updateRole(crId, "cr");
+    await usersRepository.updateRole(crId, "student");
+    return batchesRepository.removeCR(batchId, crId);
+  },
+  async deleteBatch(batchId: string) {
+    const batch = await batchesRepository.findById(batchId);
+    if (!batch) throw new AppError(404, "Batch not found");
+    
+    // If there are CRs, demote them back to student
+    if (batch.crs && batch.crs.length > 0) {
+      for (const cr of batch.crs) {
+        await usersRepository.updateRole(cr.id, "student");
+      }
     }
-
-    return batchesRepository.assignCR(batchId, crId);
+    
+    return batchesRepository.delete(batchId);
   }
 };

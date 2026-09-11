@@ -100,7 +100,8 @@ model User {
   mentorProfile        MentorProfile?   @relation("MentorProfile")
   menteeSessions       MentorSession[]  @relation("MenteeSessions")
   documentsUploaded    Document[]       @relation("DocumentsUploaded")
-  controlledBatch    Batch?           @relation("BatchCR")
+  controlledBatchId    String?
+  controlledBatch      Batch?           @relation("BatchCRs", fields: [controlledBatchId], references: [id], onDelete: SetNull)
 
   @@map("users")
 }
@@ -109,8 +110,7 @@ model User {
 model Batch {
   id        String   @id @default(cuid())
   name      String   @unique
-  crId      String?  @unique
-  cr        User?    @relation("BatchCR", fields: [crId], references: [id], onDelete: SetNull)
+  crs       User[]   @relation("BatchCRs")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

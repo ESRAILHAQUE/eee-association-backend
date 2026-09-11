@@ -15,6 +15,9 @@ const createValidation = [
 // GET /clubs — list all active clubs with member count (any authenticated user)
 router.get("/", authMiddleware, clubsController.getAll);
 
+// GET /clubs/:id/members
+router.get("/:id/members", authMiddleware, requireRoles("admin", "super_admin"), clubsController.getMembers);
+
 // GET /clubs/my — member sees their clubs
 router.get("/my", authMiddleware, clubsController.getMy);
 

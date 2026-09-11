@@ -38,6 +38,15 @@ export const clubsController = {
     }
   },
 
+  async getMembers(req: Request, res: Response, next: NextFunction) {
+    try {
+      const members = await clubsService.getMembers(req.user!, req.params.id);
+      res.json({ success: true, data: members });
+    } catch (err) {
+      next(err);
+    }
+  },
+
   async getMy(req: Request, res: Response, next: NextFunction) {
     try {
       const clubs = await clubsService.getMy(req.user!);

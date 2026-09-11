@@ -24,6 +24,12 @@ router.get(
   usersController.getList
 );
 
+router.post(
+  "/bulk",
+  requireRoles("admin", "super_admin"),
+  usersController.bulkCreateStudents
+);
+
 router.patch(
   "/:id",
   requireRoles("admin", "super_admin"),

@@ -58,4 +58,27 @@ export const clubsRepository = {
       orderBy: { joinedAt: "desc" },
     });
   },
+
+  /** Get all members of a specific club */
+  async findMembers(clubId: string) {
+    return prisma.clubMember.findMany({
+      where: { clubId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            registrationNumber: true,
+            profile: {
+              select: {
+                batch: true,
+                rollNumber: true,
+              }
+            }
+          }
+        }
+      },
+      orderBy: { joinedAt: "desc" },
+    });
+  },
 };

@@ -40,8 +40,8 @@ export const feesService = {
 
   /** CR: scoped to their batch */
   async getBatchFees(actor: { userId: string }, filters?: { status?: string }) {
-    const controlledBatch = await prisma.batch.findUnique({
-      where: { crId: actor.userId },
+    const controlledBatch = await prisma.batch.findFirst({
+      where: { crs: { some: { id: actor.userId } } },
       select: { name: true },
     });
     if (!controlledBatch?.name) throw new Error("CR has no batch assigned");
@@ -55,8 +55,8 @@ export const feesService = {
 
   /** CR: stats for own batch */
   async getBatchStats(actor: { userId: string }) {
-    const controlledBatch = await prisma.batch.findUnique({
-      where: { crId: actor.userId },
+    const controlledBatch = await prisma.batch.findFirst({
+      where: { crs: { some: { id: actor.userId } } },
       select: { name: true },
     });
     return feesRepository.getStats(controlledBatch?.name ?? undefined);

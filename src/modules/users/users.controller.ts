@@ -33,8 +33,8 @@ export const usersController = {
       const user = (req as any).user;
       if (user?.currentRole === "cr") {
         const { prisma } = require("../../database");
-        const controlledBatch = await prisma.batch.findUnique({
-          where: { crId: user.id },
+        const controlledBatch = await prisma.batch.findFirst({
+          where: { crs: { some: { id: user.id } } },
         });
         if (controlledBatch) {
           filters.batch = controlledBatch.name;
@@ -166,4 +166,22 @@ export const usersController = {
       next(e);
     }
   },
+
+  async bulkCreateStudents(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const students = req.body;
+      if (!Array.isArray(students)) {
+        res.status(400).json({ success: false, message: "Request body must be an array of students" });
+        return;
+      }
+      const result = await usersService.bulkAddStudents(students);
+      res.status(201).json({ success: true, data: result });
+    } catch (e) {
+      next(e);
+    }
+  }
 };

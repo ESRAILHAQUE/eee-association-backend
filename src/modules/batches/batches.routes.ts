@@ -22,10 +22,22 @@ router.post(
   batchesController.createBatch
 );
 
-router.patch(
+router.post(
   "/:id/cr",
   requireRoles("admin", "super_admin"),
-  batchesController.assignCR
+  batchesController.addCR
+);
+
+router.delete(
+  "/:id/cr/:crId",
+  requireRoles("admin", "super_admin"),
+  batchesController.removeCR
+);
+
+router.delete(
+  "/:id",
+  requireRoles("admin", "super_admin"),
+  batchesController.deleteBatch
 );
 
 export const batchesRoutes = router;
