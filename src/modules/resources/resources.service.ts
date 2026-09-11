@@ -12,6 +12,20 @@ export const resourcesService = {
       select: { batch: true },
     });
 
+    const isAdmin = actor.role === "admin" || actor.role === "super_admin";
+    const isCr = actor.role === "cr";
+    const isModerator = actor.role === "moderator";
+    
+    // Auto-approve for elevated roles
+    const status = (isAdmin || isCr || isModerator) ? "approved" : "pending";
+    
+    // Admins and Moderators can share to a specific batch or globally (null).
+    // CRs and Students must be restricted to their own batch.
+    let targetBatch = body.batch ?? null;
+    if (!isAdmin && !isModerator) {
+      targetBatch = profile?.batch ?? null;
+    }
+
     return resourcesRepository.create({
       title: body.title,
       description: body.description ?? null,
@@ -20,7 +34,8 @@ export const resourcesService = {
       fileUrl: body.fileUrl,
       fileType: body.fileType,
       uploadedById: actor.userId,
-      batch: body.batch ?? profile?.batch ?? null,
+      batch: targetBatch,
+      status: status as any
     });
   },
 
@@ -42,7 +57,7 @@ export const resourcesService = {
   /** Moderator/admin views pending resources */
   async getPending(actor: JwtPayload) {
     const role = actor.role ?? "";
-    if (role !== "moderator" && role !== "admin" && role !== "super_admin") {
+    if (role !== "moderator" && role !== "admin" && role !== "super_admin" && role !== "cr") {
       throw new AppError(403, "Not authorized to view pending resources");
     }
     return resourcesRepository.findPending();
@@ -51,7 +66,7 @@ export const resourcesService = {
   /** Moderator/admin approves or rejects a resource */
   async updateStatus(actor: JwtPayload, id: string, body: UpdateResourceStatusBody) {
     const role = actor.role ?? "";
-    if (role !== "moderator" && role !== "admin" && role !== "super_admin") {
+    if (role !== "moderator" && role !== "admin" && role !== "super_admin" && role !== "cr") {
       throw new AppError(403, "Not authorized to update resource status");
     }
 

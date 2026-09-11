@@ -26,6 +26,7 @@ export const resourcesRepository = {
     fileType: string;
     uploadedById: string;
     batch: string | null;
+    status?: ResourceStatus;
   }) {
     return prisma.resource.create({ data, select: resourceSelect });
   },

@@ -26,7 +26,7 @@ const statusValidation = [
 router.post(
   "/",
   authMiddleware,
-  requireRoles("admin", "super_admin"),
+  requireRoles("admin", "super_admin", "moderator", "cr", "student"),
   validate(createValidation),
   resourcesController.create,
 );
@@ -34,19 +34,19 @@ router.post(
 // GET /resources — list approved resources (any authenticated user)
 router.get("/", authMiddleware, resourcesController.getApproved);
 
-// GET /resources/pending — moderator/admin sees pending resources
+// GET /resources/pending — moderator/admin/cr sees pending resources
 router.get(
   "/pending",
   authMiddleware,
-  requireRoles("moderator", "admin", "super_admin"),
+  requireRoles("moderator", "admin", "super_admin", "cr"),
   resourcesController.getPending,
 );
 
-// PATCH /resources/:id/status — moderator/admin approves or rejects
+// PATCH /resources/:id/status — moderator/admin/cr approves or rejects
 router.patch(
   "/:id/status",
   authMiddleware,
-  requireRoles("moderator", "admin", "super_admin"),
+  requireRoles("moderator", "admin", "super_admin", "cr"),
   validate(statusValidation),
   resourcesController.updateStatus,
 );
