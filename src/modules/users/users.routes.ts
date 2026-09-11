@@ -9,6 +9,15 @@ const router = Router();
 // All routes require auth
 router.use(authMiddleware);
 
+router.patch(
+  "/me",
+  validate([
+    body("personalEmail").optional().isEmail().withMessage("Valid email required"),
+    body("phoneNumber").optional().isString(),
+  ]),
+  usersController.updateMyProfile
+);
+
 router.get(
   "/",
   requireRoles("cr", "admin", "super_admin"),

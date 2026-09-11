@@ -1,5 +1,10 @@
 // Users module type definitions
 
+export interface UpdateMyProfileBody {
+  personalEmail?: string;
+  phoneNumber?: string;
+}
+
 export interface UpdateProfileBody {
   rollNumber?: string;
   batch?: string;

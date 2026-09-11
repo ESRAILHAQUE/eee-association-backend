@@ -148,4 +148,22 @@ export const usersController = {
       next(e);
     }
   },
+
+  async updateMyProfile(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = req.user!.userId;
+      const body = req.body as { personalEmail?: string; phoneNumber?: string };
+      const profile = await usersService.updateMyProfile(userId, {
+        personalEmail: body.personalEmail,
+        phoneNumber: body.phoneNumber,
+      });
+      res.status(200).json({ success: true, data: profile });
+    } catch (e) {
+      next(e);
+    }
+  },
 };

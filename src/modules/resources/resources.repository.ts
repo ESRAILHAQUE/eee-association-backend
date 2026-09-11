@@ -31,10 +31,13 @@ export const resourcesRepository = {
   },
 
   /** List approved resources with optional filters */
-  async findApproved(filters?: { subject?: string; semester?: number }) {
+  async findApproved(userBatch: string | null, isAdmin: boolean, filters?: { subject?: string; semester?: number }) {
+    const batchFilter = !isAdmin ? (userBatch ? { OR: [{ batch: null }, { batch: userBatch }] } : { batch: null }) : {};
+
     return prisma.resource.findMany({
       where: {
         status: "approved",
+        ...batchFilter,
         ...(filters?.subject ? { subject: { contains: filters.subject, mode: "insensitive" } } : {}),
         ...(filters?.semester !== undefined ? { semester: filters.semester } : {}),
       },

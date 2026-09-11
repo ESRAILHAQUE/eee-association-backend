@@ -13,6 +13,7 @@ const createValidation = [
   body("fileType").trim().notEmpty().withMessage("fileType is required"),
   body("description").optional().isString(),
   body("semester").optional().isInt({ min: 1, max: 8 }).withMessage("semester must be between 1 and 8"),
+  body("batch").optional().isString(),
 ];
 
 const statusValidation = [
@@ -25,6 +26,7 @@ const statusValidation = [
 router.post(
   "/",
   authMiddleware,
+  requireRoles("admin", "super_admin"),
   validate(createValidation),
   resourcesController.create,
 );

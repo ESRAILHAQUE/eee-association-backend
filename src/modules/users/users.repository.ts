@@ -65,6 +65,14 @@ export const usersRepository = {
     });
   },
 
+  async updateMyProfile(userId: string, data: { personalEmail?: string; phoneNumber?: string }) {
+    // We only update if the profile exists, otherwise it might fail if they are somehow missing a profile record
+    return prisma.userProfile.update({
+      where: { userId },
+      data,
+    });
+  },
+
   async updateUser(userId: string, userUpdate: any, profileUpdate: any) {
     return prisma.user.update({
       where: { id: userId },

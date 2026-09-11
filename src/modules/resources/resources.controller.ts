@@ -14,7 +14,7 @@ export const resourcesController = {
   async getApproved(req: Request, res: Response, next: NextFunction) {
     try {
       const { subject, semester } = req.query as Record<string, string>;
-      const resources = await resourcesService.getApproved({ subject, semester });
+      const resources = await resourcesService.getApproved(req.user!, { subject, semester });
       res.json({ success: true, data: resources });
     } catch (err) {
       next(err);

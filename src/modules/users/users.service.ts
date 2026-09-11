@@ -48,5 +48,9 @@ export const usersService = {
 
   async updateRole(userId: string, role: string) {
     return usersRepository.updateRole(userId, role as any);
+  },
+
+  async updateMyProfile(userId: string, data: { personalEmail?: string; phoneNumber?: string }) {
+    return usersRepository.updateMyProfile(userId, data);
   }
 };

@@ -20,14 +20,20 @@ export const resourcesService = {
       fileUrl: body.fileUrl,
       fileType: body.fileType,
       uploadedById: actor.userId,
-      batch: profile?.batch ?? null,
+      batch: body.batch ?? profile?.batch ?? null,
     });
   },
 
   /** Any authenticated user lists approved resources */
-  async getApproved(query: { subject?: string; semester?: string }) {
+  async getApproved(actor: JwtPayload, query: { subject?: string; semester?: string }) {
+    const profile = await prisma.userProfile.findUnique({
+      where: { userId: actor.userId },
+      select: { batch: true },
+    });
+    const isAdmin = actor.role === "admin" || actor.role === "super_admin";
+
     const semester = query.semester ? parseInt(query.semester, 10) : undefined;
-    return resourcesRepository.findApproved({
+    return resourcesRepository.findApproved(profile?.batch ?? null, isAdmin, {
       subject: query.subject,
       semester: isNaN(semester as number) ? undefined : semester,
     });

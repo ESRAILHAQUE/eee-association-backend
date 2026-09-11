@@ -7,6 +7,7 @@ export interface CreateResourceBody {
   semester?: number;
   fileUrl: string;
   fileType: string;
+  batch?: string;
 }
 
 export interface UpdateResourceStatusBody {
