@@ -58,4 +58,15 @@ export const clubsService = {
     const memberships = await clubsRepository.findByUser(actor.userId);
     return memberships.map((m) => m.club);
   },
+
+  /** Admin hard-deletes a club */
+  async deleteClub(actor: JwtPayload, clubId: string) {
+    if (actor.role !== "admin" && actor.role !== "super_admin") {
+      throw new AppError(403, "Only admin can delete clubs");
+    }
+    const club = await clubsRepository.findById(clubId);
+    if (!club) throw new AppError(404, "Club not found");
+    await clubsRepository.deleteById(clubId);
+    return { deleted: true };
+  },
 };

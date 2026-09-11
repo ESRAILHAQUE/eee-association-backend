@@ -55,4 +55,13 @@ export const clubsController = {
       next(err);
     }
   },
+
+  async deleteClub(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await clubsService.deleteClub(req.user!, req.params.id);
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  },
 };

@@ -36,7 +36,7 @@ export const notificationsRepository = {
       where: { batch },
       select: { userId: true },
     });
-    return profiles.map((p) => p.userId);
+    return profiles.map((p: { userId: string }) => p.userId);
   },
 
   /** Fetch all user ids (non-deleted) */
@@ -45,7 +45,7 @@ export const notificationsRepository = {
       where: { isDeleted: false },
       select: { id: true },
     });
-    return users.map((u) => u.id);
+    return users.map((u: { id: string }) => u.id);
   },
 
   /** Get all notifications for a user, newest first */

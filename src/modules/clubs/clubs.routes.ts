@@ -36,4 +36,7 @@ router.post("/:id/join", authMiddleware, clubsController.join);
 // DELETE /clubs/:id/leave — member leaves a club
 router.delete("/:id/leave", authMiddleware, clubsController.leave);
 
+// DELETE /clubs/:id — admin deletes a club
+router.delete("/:id", authMiddleware, requireRoles("admin", "super_admin"), clubsController.deleteClub);
+
 export const clubsRoutes = router;

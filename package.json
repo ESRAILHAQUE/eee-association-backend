@@ -4,7 +4,7 @@
   "description": "EEE Association API - TypeScript, Express, Prisma, PostgreSQL",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "NODE_OPTIONS='--conditions=require' tsx watch src/server.ts",
     "build": "prisma generate && tsc",
     "start": "node dist/server.js",
     "postinstall": "prisma generate",

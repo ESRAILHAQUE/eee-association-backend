@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { usersService } from "./users.service";
+import { prisma } from "../../database";
 
 export const usersController = {
   async updateUser(
@@ -30,17 +31,16 @@ export const usersController = {
         search: search as string,
       };
 
-      const user = (req as any).user;
-      if (user?.currentRole === "cr") {
-        const { prisma } = require("../../database");
+      const user = req.user;
+      if (user?.role === "cr") {
         const controlledBatch = await prisma.batch.findFirst({
-          where: { crs: { some: { id: user.id } } },
+          where: { crs: { some: { id: user.userId } } },
         });
         if (controlledBatch) {
           filters.batch = controlledBatch.name;
         } else {
-          // If the CR doesn't control any batch, they shouldn't see anyone
-          filters.batch = "___NONE___"; 
+          // CR doesn't control any batch → show nothing
+          filters.batch = "___NONE___";
         }
       }
 

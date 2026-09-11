@@ -81,4 +81,11 @@ export const clubsRepository = {
       orderBy: { joinedAt: "desc" },
     });
   },
+
+  /** Hard-delete a club and all its memberships */
+  async deleteById(id: string) {
+    // Remove all members first to avoid FK constraint errors
+    await prisma.clubMember.deleteMany({ where: { clubId: id } });
+    return prisma.club.delete({ where: { id } });
+  },
 };
