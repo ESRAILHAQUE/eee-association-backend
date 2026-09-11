@@ -652,3 +652,14 @@ model RoleHistory {
   @@map("role_history")
 }
 
+// ============ Homepage Settings ============
+model HomepageSetting {
+  id           String   @id @default(cuid())
+  hero         Json?    @default("[]")
+  achievements Json?    @default("[]")
+  clubs        Json?    @default("[]")
+  events       Json?    @default("[]")
+  updatedAt    DateTime @updatedAt
+
+  @@map("homepage_settings")
+}

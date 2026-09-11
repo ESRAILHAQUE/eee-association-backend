@@ -20,7 +20,7 @@ import { analyticsRoutes } from "../modules/analytics";
 import { logsRoutes } from "../modules/logs";
 import { newsletterRoutes } from "../modules/newsletter";
 import { batchesRoutes } from "../modules/batches";
-
+import { homepageRoutes } from "../modules/homepage";
 const router = Router();
 
 router.use("/auth", authRoutes);
@@ -43,7 +43,8 @@ router.use("/fees", feesRoutes);
 router.use("/analytics", analyticsRoutes);
 router.use("/logs", logsRoutes);
 router.use("/newsletter", newsletterRoutes);
-
+console.log("homepageRoutes is:", homepageRoutes);
+router.use("/homepage", homepageRoutes);
 // Health check
 router.get("/health", (_req, res) => {
   res.json({
